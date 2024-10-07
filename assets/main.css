@@ -1,0 +1,23 @@
+html {
+    background: linear-gradient(45deg, #0044ff 0%, #00b7ff 75%);
+    height: 100%;
+}
+
+body {
+    margin: 0
+}
+
+.page-header {
+    display: flex;
+    background: white;
+    width: 100%;
+    pad: 0;
+}
+
+.nav-bar-tab {
+    flex: 1;
+    color: black;
+    border: thick "black";
+    background-color: blueviolet;
+    margin: 10;
+}
