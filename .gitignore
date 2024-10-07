@@ -5,6 +5,7 @@
 /static/
 /.dioxus/
 /.direnv/
+/.vscode/
 
 # this file will generate by tailwind:
 /assets/tailwind.css

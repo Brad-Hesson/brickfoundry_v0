@@ -1,5 +1,5 @@
 html {
-    background: linear-gradient(45deg, #0044ff 0%, #00b7ff 75%);
+    background: linear-gradient(45deg, #7700ff 0%, #00b7ff 75%);
     height: 100%;
 }
 
@@ -7,17 +7,31 @@ body {
     margin: 0
 }
 
-.page-header {
+.nav-bar {
+    padding: 5px;
     display: flex;
-    background: white;
-    width: 100%;
-    pad: 0;
+    justify-content: space-between;
+    border-bottom: 1px black solid;
+    background: rgba(255, 255, 255, 0.4);
 }
 
 .nav-bar-tab {
     flex: 1;
+    margin: 5px;
     color: black;
-    border: thick "black";
-    background-color: blueviolet;
-    margin: 10;
-}
+    padding: 0.6rem 0rem;
+    text-align: center;
+    background: white;
+    border-radius: 5px;
+    text-decoration: none;
+    box-shadow: 1px 2px 3px black;
+  }
+
+  .nav-bar-tab:hover {
+    background: rgb(255, 128, 255);
+  }
+
+  /* This selector is basically "mouse-down" */
+  .nav-bar-tab:active:hover {
+    background: purple;
+  }
