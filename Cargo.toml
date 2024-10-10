@@ -13,8 +13,37 @@ dioxus = { version = "0.5", features = ["fullstack", "router"] }
 
 # Debug
 dioxus-logger = "0.5.1"
+web-sys = { version = "0.3.70", optional = false, features = [
+    'CanvasRenderingContext2d',
+    'HtmlCanvasElement',
+    'WebGlBuffer',
+    'WebGlVertexArrayObject',
+    'WebGl2RenderingContext',
+    'WebGlProgram',
+    'WebGlShader',
+] }
+ldraw = { git = "https://github.com/segfault87/ldraw.rs.git" }
+ldraw-renderer = { git = "https://github.com/segfault87/ldraw.rs.git" }
+ldraw-ir = { git = "https://github.com/segfault87/ldraw.rs.git" }
+viewer-common = { git = "https://github.com/segfault87/ldraw.rs.git" }
+winit = { version = "0.29", default-features = false, optional = true }
+reqwest = "0.12.8"
+tokio = { version = "1.40.0", features = ["io-util", "rt"] }
+wgpu = { version = "22.0", default-features = false, features = ["webgl"] }
+anyhow = "1.0.89"
+futures-util = "0.3.31"
+async-trait = "0.1.83"
+axum = { version = "0.7.7", optional = true }
+axum-server = { version = "0.7.1", features = ["tls-rustls"], optional = true }
+rcgen = { version = "0.13.1", optional = true }
 
 [features]
 default = []
-server = ["dioxus/axum"]
-web = ["dioxus/web"]
+server = [
+    "dioxus/axum",
+    "tokio/rt-multi-thread",
+    "dep:axum",
+    "dep:axum-server",
+    "dep:rcgen",
+]
+web = ["dioxus/web", "dep:winit"]

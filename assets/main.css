@@ -35,3 +35,8 @@ body {
   .nav-bar-tab:active:hover {
     background: purple;
   }
+
+  #lego-render-canvas{
+    width: 600px;
+    height: 500px;
+  }
