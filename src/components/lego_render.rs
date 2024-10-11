@@ -1,13 +1,23 @@
-use std::path::PathBuf;
+use std::{
+    io::{BufReader, Read},
+    path::PathBuf,
+};
 
 use dioxus::prelude::*;
 use dioxus_logger::tracing::{error, info};
-use ldraw::color::ColorCatalog;
-use tokio::io::AsyncReadExt;
+use futures_util::stream;
+use server_fn::codec::{ByteStream, Streaming};
+#[cfg(feature = "server")]
+use server_fn::response::http;
+#[cfg(feature = "server")]
+use tokio::io::AsyncReadExt as _;
 use web_sys::{
     wasm_bindgen::{JsCast as _, JsValue},
     HtmlCanvasElement,
 };
+
+#[cfg(feature = "server")]
+use crate::LDrawState;
 
 #[derive(Props, PartialEq, Clone)]
 pub struct LegoRenderProps {
@@ -63,23 +73,22 @@ mod renderer {
     };
 
     use dioxus_logger::tracing::{error, info};
-    use futures_util::TryFutureExt;
+    use futures_util::{stream, StreamExt, TryStreamExt};
     use ldraw::{
         color::ColorCatalog,
         document::MultipartDocument,
         error::ResolutionError,
         library::{CacheCollectionStrategy, FileLocation, LibraryLoader, PartCache},
         parser::{parse_color_definitions, parse_multipart_document},
-        resolvers::http::HttpLoader,
         PartAlias,
     };
-    use reqwest::Url;
     use web_sys::HtmlCanvasElement;
     use winit::{
         event_loop::EventLoop, platform::web::WindowBuilderExtWebSys as _, window::WindowBuilder,
     };
 
     use super::load_asset;
+    use super::load_ldr;
 
     pub async fn run(canvas_elem: HtmlCanvasElement) -> anyhow::Result<()> {
         info!("run called");
@@ -112,7 +121,6 @@ mod renderer {
             )
             .await?;
         app.set_document(cache.clone(), &document, &|_alias, _err| {
-            info!("Loaded: {_alias}");
             if let Err(e) = _err {
                 error!("Error loading `{_alias}`: {e:?}");
             }
@@ -123,7 +131,6 @@ mod renderer {
             .unwrap()
             .collect(CacheCollectionStrategy::Parts);
         let sp = app.get_subparts();
-        info!("Subparts {sp:?}");
         let app = Rc::new(RefCell::new(app));
 
         let perf = web_sys::window().unwrap().performance().unwrap();
@@ -168,10 +175,15 @@ mod renderer {
     #[async_trait::async_trait(?Send)]
     impl LibraryLoader for DioxusLoader {
         async fn load_colors(&self) -> Result<ColorCatalog, ResolutionError> {
-            let bytes = load_asset("ldraw/LDConfig.ldr".into())
+            let mut byte_stream = load_ldr("LDConfig.ldr".into())
                 .await
-                .map_err(|_| ResolutionError::FileNotFound)?;
-            let colors = parse_color_definitions(&mut bytes.as_slice()).await?;
+                .map_err(|_| ResolutionError::FileNotFound)?
+                .into_inner();
+            let mut buf = Vec::new();
+            while let Some(frame) = byte_stream.try_next().await.unwrap() {
+                buf.extend(frame);
+            }
+            let colors = parse_color_definitions(&mut buf.as_slice()).await?;
             Ok(colors)
         }
 
@@ -181,11 +193,16 @@ mod renderer {
             _local: bool,
             colors: &ColorCatalog,
         ) -> Result<(FileLocation, MultipartDocument), ResolutionError> {
-            let path = PathBuf::new().join("ldraw/parts").join(_alias.normalized);
-            let bytes = load_asset(path)
+            let mut byte_stream = load_ldr(_alias.normalized)
                 .await
-                .map_err(|_| ResolutionError::FileNotFound)?;
-            let multi_doc = parse_multipart_document(&mut bytes.as_slice(), colors).await?;
+                .map_err(|_| ResolutionError::FileNotFound)?
+                .into_inner();
+            let mut buf = Vec::new();
+            while let Some(frame) = byte_stream.try_next().await.unwrap() {
+                buf.extend(frame);
+            }
+            dbg!(buf.len());
+            let multi_doc = parse_multipart_document(&mut buf.as_slice(), colors).await?;
             Ok((FileLocation::Local, multi_doc))
         }
     }
@@ -200,4 +217,15 @@ async fn load_asset(asset: PathBuf) -> Result<Vec<u8>, ServerFnError> {
     let mut buf = Vec::new();
     file.read_to_end(&mut buf).await?;
     Ok(buf)
+}
+
+#[server(output = Streaming)]
+async fn load_ldr(name: String) -> Result<ByteStream, ServerFnError> {
+    let state: LDrawState = extract().await.unwrap();
+    let mut buf = Vec::new();
+    let mut lock = state.lib.lock()?;
+    let file = lock.get_part(&name).unwrap();
+    let mut reader = BufReader::new(file);
+    reader.read_to_end(&mut buf)?;
+    Ok(ByteStream::new(stream::once(async { Ok(buf) })))
 }

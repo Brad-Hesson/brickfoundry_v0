@@ -10,7 +10,6 @@ edition = "2021"
 serde = { version = "1.0.197", features = ["derive"] }
 
 dioxus = { version = "0.5", features = ["fullstack", "router"] }
-
 # Debug
 dioxus-logger = "0.5.1"
 web-sys = { version = "0.3.70", optional = false, features = [
@@ -35,7 +34,11 @@ futures-util = "0.3.31"
 async-trait = "0.1.83"
 axum = { version = "0.7.7", optional = true }
 axum-server = { version = "0.7.1", features = ["tls-rustls"], optional = true }
-rcgen = { version = "0.13.1", optional = true }
+zip = { version = "2.2.0", optional = true, default-features = false, features = [
+    "deflate",
+] }
+http = "1.1.0"
+bytes = "1.7.2"
 
 [features]
 default = []
@@ -44,6 +47,6 @@ server = [
     "tokio/rt-multi-thread",
     "dep:axum",
     "dep:axum-server",
-    "dep:rcgen",
+    "dep:zip",
 ]
 web = ["dioxus/web", "dep:winit"]

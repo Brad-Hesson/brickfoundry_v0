@@ -1,5 +1,4 @@
 use dioxus::prelude::*;
-use dioxus_logger::tracing::info;
 
 #[component]
 pub fn Projects() -> Element {
@@ -21,7 +20,7 @@ pub fn Projects() -> Element {
 
 #[server]
 async fn get_project_list() -> Result<Vec<String>, ServerFnError> {
-    info!("Sending Projects");
+    dioxus_logger::tracing::info!("Sending Projects");
     Ok([
         "project1", "project2", "project3", "project4", "project5", "project6", "project7",
     ]

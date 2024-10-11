@@ -7,6 +7,7 @@
 /.direnv/
 /.vscode/
 /cert/
+/.cargo/
 
 # this file will generate by tailwind:
 /assets/tailwind.css
@@ -15,5 +16,5 @@
 **/*.rs.bk
 
 /.envrc
-/assets/ldraw/
 *.br
+*.zip
