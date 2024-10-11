@@ -50,3 +50,7 @@ server = [
     "dep:zip",
 ]
 web = ["dioxus/web", "dep:winit"]
+
+
+[package.metadata.wasm-bindgen]
+dwarf-debug-info = true
