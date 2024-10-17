@@ -17,7 +17,7 @@ use web_sys::{
 };
 
 #[cfg(feature = "server")]
-use crate::LDrawState;
+use crate::AppState;
 
 #[derive(Props, PartialEq, Clone)]
 pub struct LegoRenderProps {
@@ -100,6 +100,7 @@ mod renderer {
         let window = WindowBuilder::new()
             .with_canvas(Some(canvas_elem))
             .build(&event_loop)?;
+        info!("here");
 
         let loader = Rc::new(DioxusLoader);
         let colors = Rc::new(loader.load_colors().await?);
@@ -221,11 +222,7 @@ async fn load_asset(asset: PathBuf) -> Result<Vec<u8>, ServerFnError> {
 
 #[server(output = Streaming)]
 async fn load_ldr(name: String) -> Result<ByteStream, ServerFnError> {
-    let state: LDrawState = extract().await.unwrap();
-    let mut buf = Vec::new();
-    let mut lock = state.lib.lock()?;
-    let file = lock.get_part(&name).unwrap();
-    let mut reader = BufReader::new(file);
-    reader.read_to_end(&mut buf)?;
+    let state: AppState = extract().await.unwrap();
+    let buf = state.ldraw_part_library.get_part(name).unwrap();
     Ok(ByteStream::new(stream::once(async { Ok(buf) })))
 }
